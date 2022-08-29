@@ -15,6 +15,7 @@ from contextlib import contextmanager, nullcontext
 from ldm.util import instantiate_from_config
 from ldm.models.diffusion.ddim import DDIMSampler
 from ldm.models.diffusion.plms import PLMSSampler
+# from ldm.models.diffusion.ksampler import KSampler
 
 
 def chunk(it, size):
@@ -160,7 +161,7 @@ def main():
         type=str,
         default="models/ldm/stable-diffusion-v1/model.ckpt",
         help="path to checkpoint of model",
-    )    
+    )
     parser.add_argument(
         "--seed",
         type=int,
@@ -177,8 +178,8 @@ def main():
 
 
     parser.add_argument(
-        "--embedding_path", 
-        type=str, 
+        "--embedding_path",
+        type=str,
         help="Path to a pre-trained embedding manager checkpoint")
 
     opt = parser.parse_args()
