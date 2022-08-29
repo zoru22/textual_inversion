@@ -12,6 +12,7 @@ import torch.nn as nn
 import os
 import numpy as np
 import pytorch_lightning as pl
+from torch import clamp
 from torch.optim.lr_scheduler import LambdaLR
 from einops import rearrange, repeat
 from contextlib import contextmanager
@@ -346,11 +347,11 @@ class DDPM(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         loss, loss_dict = self.shared_step(batch)
 
-        self.log_dict(loss_dict, prog_bar=True,
+        self.log_dict(loss_dict, prog_bar=False,
                       logger=True, on_step=True, on_epoch=True)
 
         self.log("global_step", float(self.global_step),
-                 prog_bar=True, logger=True, on_step=True, on_epoch=False)
+                 prog_bar=False, logger=True, on_step=True, on_epoch=False)
 
         if self.use_scheduler:
             lr = self.optimizers().param_groups[0]['lr']
@@ -915,7 +916,8 @@ class LatentDiffusion(DDPM):
 
         return self.p_losses(x, c, t, *args, **kwargs)
 
-    def _rescale_annotations(self, bboxes, crop_coordinates):  # TODO: move to dataset
+    @staticmethod
+    def _rescale_annotations(bboxes, crop_coordinates):  # TODO: move to dataset
         def rescale_bbox(bbox):
             x0 = clamp((bbox[0] - crop_coordinates[0]) / crop_coordinates[2])
             y0 = clamp((bbox[1] - crop_coordinates[1]) / crop_coordinates[3])
@@ -1453,15 +1455,17 @@ class LatentDiffusion(DDPM):
     @rank_zero_only
     def on_save_checkpoint(self, checkpoint):
         checkpoint.clear()
-        
-        if os.path.isdir(self.trainer.checkpoint_callback.dirpath):
-            self.embedding_manager.save(os.path.join(self.trainer.checkpoint_callback.dirpath, "embeddings.pt"))
 
+        dirpath = self.trainer.checkpoint_callback.dirpath
+        if os.path.isdir(dirpath):
             if (self.global_step - self.emb_ckpt_counter) > 500:
-                self.embedding_manager.save(os.path.join(self.trainer.checkpoint_callback.dirpath, f"embeddings_gs-{self.global_step}.pt"))
-
+                self.embedding_manager.save(os.path.join(dirpath, f"embeddings_gs-{self.global_step}.pt"))
                 self.emb_ckpt_counter += 500
+            else:
+                self.embedding_manager.save(os.path.join(dirpath, "embeddings.pt"))
 
+        else:
+            raise Exception('Cannot save checkpoint - no dirpath specified')
 
 class DiffusionWrapper(pl.LightningModule):
     def __init__(self, diff_model_config, conditioning_key):

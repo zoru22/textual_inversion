@@ -14,7 +14,7 @@ from inspect import isfunction
 from PIL import Image, ImageDraw, ImageFont
 
 
-def log_txt_as_img(wh, xc, size=10):
+def log_txt_as_img(wh, xc, size=16):
     # wh a tuple of (width, height)
     # xc a list of captions to plot
     b = len(xc)
@@ -22,8 +22,8 @@ def log_txt_as_img(wh, xc, size=10):
     for bi in range(b):
         txt = Image.new("RGB", wh, color="white")
         draw = ImageDraw.Draw(txt)
-        font = ImageFont.load_default()
-        # font = ImageFont.truetype('data/DejaVuSans.ttf', size=size)
+        # font = ImageFont.load_default()
+        font = ImageFont.truetype('data/DejaVuSans.ttf', size=size)
         nc = int(40 * (wh[0] / 256))
         lines = "\n".join(xc[bi][start:start + nc] for start in range(0, len(xc[bi]), nc))
 

@@ -29,7 +29,8 @@ import warnings
 
 # Yeah this warning can fuck off lmao
 warnings.filterwarnings("ignore", ".*Consider increasing the value of the `num_workers` argument*")
-warnings.filterwarnings("ignore", ".*Some weights of the model checkpoint at *")
+warnings.filterwarnings("ignore", "Some weights of the model checkpoint at*")
+logging.get_logger('transformers').setLevel(logging.ERROR)
 
 def load_model_from_config(config, ckpt, verbose=False):
     print(f"Loading model from {ckpt}")

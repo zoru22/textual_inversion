@@ -147,7 +147,7 @@ class VQModel(pl.LightningModule):
 
         if optimizer_idx == 0:
             # autoencode
-            aeloss, log_dict_ae = self.loss(qloss, x, xrec, optimizer_idx, self.global_step,
+            aeloss, log_dict_ae = self.loss(qloss, x, xrec, optimizer_idx, float(self.global_step),
                                             last_layer=self.get_last_layer(), split="train",
                                             predicted_indices=ind)
 
@@ -156,7 +156,7 @@ class VQModel(pl.LightningModule):
 
         if optimizer_idx == 1:
             # discriminator
-            discloss, log_dict_disc = self.loss(qloss, x, xrec, optimizer_idx, self.global_step,
+            discloss, log_dict_disc = self.loss(qloss, x, xrec, optimizer_idx, float(self.global_step),
                                             last_layer=self.get_last_layer(), split="train")
             self.log_dict(log_dict_disc, prog_bar=False, logger=True, on_step=True, on_epoch=True)
             return discloss
@@ -171,14 +171,14 @@ class VQModel(pl.LightningModule):
         x = self.get_input(batch, self.image_key)
         xrec, qloss, ind = self(x, return_pred_indices=True)
         aeloss, log_dict_ae = self.loss(qloss, x, xrec, 0,
-                                        self.global_step,
+                                        float(self.global_step),
                                         last_layer=self.get_last_layer(),
                                         split="val"+suffix,
                                         predicted_indices=ind
                                         )
 
         discloss, log_dict_disc = self.loss(qloss, x, xrec, 1,
-                                            self.global_step,
+                                            float(self.global_step),
                                             last_layer=self.get_last_layer(),
                                             split="val"+suffix,
                                             predicted_indices=ind
@@ -354,7 +354,7 @@ class AutoencoderKL(pl.LightningModule):
 
         if optimizer_idx == 0:
             # train encoder+decoder+logvar
-            aeloss, log_dict_ae = self.loss(inputs, reconstructions, posterior, optimizer_idx, self.global_step,
+            aeloss, log_dict_ae = self.loss(inputs, reconstructions, posterior, optimizer_idx, float(self.global_step),
                                             last_layer=self.get_last_layer(), split="train")
             self.log("aeloss", aeloss, prog_bar=True, logger=True, on_step=True, on_epoch=True)
             self.log_dict(log_dict_ae, prog_bar=False, logger=True, on_step=True, on_epoch=False)
@@ -362,7 +362,7 @@ class AutoencoderKL(pl.LightningModule):
 
         if optimizer_idx == 1:
             # train the discriminator
-            discloss, log_dict_disc = self.loss(inputs, reconstructions, posterior, optimizer_idx, self.global_step,
+            discloss, log_dict_disc = self.loss(inputs, reconstructions, posterior, optimizer_idx, float(self.global_step),
                                                 last_layer=self.get_last_layer(), split="train")
 
             self.log("discloss", discloss, prog_bar=True, logger=True, on_step=True, on_epoch=True)
@@ -372,10 +372,10 @@ class AutoencoderKL(pl.LightningModule):
     def validation_step(self, batch, batch_idx):
         inputs = self.get_input(batch, self.image_key)
         reconstructions, posterior = self(inputs)
-        aeloss, log_dict_ae = self.loss(inputs, reconstructions, posterior, 0, self.global_step,
+        aeloss, log_dict_ae = self.loss(inputs, reconstructions, posterior, 0, float(self.global_step),
                                         last_layer=self.get_last_layer(), split="val")
 
-        discloss, log_dict_disc = self.loss(inputs, reconstructions, posterior, 1, self.global_step,
+        discloss, log_dict_disc = self.loss(inputs, reconstructions, posterior, 1, float(self.global_step),
                                             last_layer=self.get_last_layer(), split="val")
 
         self.log("val/rec_loss", log_dict_ae["val/rec_loss"])

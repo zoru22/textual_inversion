@@ -160,7 +160,6 @@ class NoisyLatentImageClassifier(pl.LightningModule):
 
     @torch.no_grad()
     def write_logs(self, loss, logits, targets):
-        print('writing logs')
         log_prefix = 'train' if self.training else 'val'
         log = {}
         log[f"{log_prefix}/loss"] = loss.mean()
@@ -173,9 +172,9 @@ class NoisyLatentImageClassifier(pl.LightningModule):
 
         self.log_dict(log, prog_bar=False, logger=True, on_step=self.training, on_epoch=True)
         self.log('loss', log[f"{log_prefix}/loss"], prog_bar=True, logger=False)
-        self.log('global_step', float(self.global_step), logger=False, on_epoch=False, prog_bar=True)
+        self.log('global_step', float(self.global_step), logger=False, on_epoch=False, prog_bar=False)
         lr = self.optimizers().param_groups[0]['lr']
-        self.log('lr_abs', lr, on_step=True, logger=True, on_epoch=False, prog_bar=True)
+        self.log('lr_abs', lr, on_step=True, logger=True, on_epoch=False, prog_bar=False)
 
     def shared_step(self, batch, t=None):
         x, *_ = self.diffusion_model.get_input(batch, k=self.diffusion_model.first_stage_key)

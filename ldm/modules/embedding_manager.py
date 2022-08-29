@@ -9,7 +9,7 @@ DEFAULT_PLACEHOLDER_TOKEN = ["*"]
 
 PROGRESSIVE_SCALE = 2000
 
-def get_clip_token_for_string(tokenizer, string):
+def get_clip_token_for_string(tokenizer:CLIPTokenizer, string):
     print(f'getting clip token for string: {string}')
     batch_encoding = tokenizer(string, truncation=True, max_length=77, return_length=True,
                                return_overflowing_tokens=False, padding="max_length", return_tensors="pt")
@@ -65,6 +65,7 @@ class EmbeddingManager(nn.Module):
             get_token_for_string = partial(get_bert_token_for_string, embedder.tknz_fn)
             get_embedding_for_tkn = embedder.transformer.token_emb
             token_dim = 1280
+            raise Exception('Not allowed to use BERT RN')
 
         if per_image_tokens:
             placeholder_strings.extend(per_img_token_list)
@@ -87,6 +88,7 @@ class EmbeddingManager(nn.Module):
             
             self.string_to_token_dict[placeholder_string] = token
             self.string_to_param_dict[placeholder_string] = token_params
+
 
 
     def forward(
