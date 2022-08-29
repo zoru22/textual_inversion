@@ -1,0 +1,7 @@
+__pycache__
+venv
+images/
+
+logs/
+src/clip
+src/taming-transformers
