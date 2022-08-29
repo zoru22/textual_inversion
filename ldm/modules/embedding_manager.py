@@ -10,6 +10,7 @@ DEFAULT_PLACEHOLDER_TOKEN = ["*"]
 PROGRESSIVE_SCALE = 2000
 
 def get_clip_token_for_string(tokenizer, string):
+    print(f'getting clip token for string: {string}')
     batch_encoding = tokenizer(string, truncation=True, max_length=77, return_length=True,
                                return_overflowing_tokens=False, padding="max_length", return_tensors="pt")
     tokens = batch_encoding["input_ids"]
@@ -18,6 +19,7 @@ def get_clip_token_for_string(tokenizer, string):
     return tokens[0, 1]
 
 def get_bert_token_for_string(tokenizer, string):
+    print(f'getting bert token for string: {string}')
     token = tokenizer(string)
     assert torch.count_nonzero(token) == 3, f"String '{string}' maps to more than a single token. Please use another string"
 
@@ -68,13 +70,14 @@ class EmbeddingManager(nn.Module):
             placeholder_strings.extend(per_img_token_list)
 
         for idx, placeholder_string in enumerate(placeholder_strings):
-            
             token = get_token_for_string(placeholder_string)
+            print(f'got token for string: [{placeholder_string}]. Token: [{token}]')
 
             if initializer_words and idx < len(initializer_words):
                 init_word_token = get_token_for_string(initializer_words[idx])
 
                 with torch.no_grad():
+                    print(f'initting word embedding.')
                     init_word_embedding = get_embedding_for_tkn(init_word_token.cpu())
 
                 token_params = torch.nn.Parameter(init_word_embedding.unsqueeze(0).repeat(num_vectors_per_token, 1), requires_grad=True)
@@ -84,6 +87,7 @@ class EmbeddingManager(nn.Module):
             
             self.string_to_token_dict[placeholder_string] = token
             self.string_to_param_dict[placeholder_string] = token_params
+
 
     def forward(
             self,
