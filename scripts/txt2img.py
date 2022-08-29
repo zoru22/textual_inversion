@@ -22,7 +22,7 @@ def load_model_from_config(config, ckpt, verbose=False):
         print("missing keys:")
         print(m)
     if len(u) > 0 and verbose:
-        print("unexpected keys:")
+        print("[TXT2IMG] unexpected keys:")
         print(u)
 
     model.cuda()

@@ -13,8 +13,8 @@ imagenet_templates_smallest = [
 
 imagenet_templates_small = [
     'a digital illustration of a {}',
-    'a rendering of a {}',
-    'a cropped digital illustration of the {}',
+    'a rendering of a {} pokemon',
+    'a cropped digital painting of the {}',
     'the digital illustration of a {}',
     'a digital illustration of a clean {}',
     'a digital illustration of a dirty {}',
@@ -28,15 +28,15 @@ imagenet_templates_small = [
     'a good digital illustration of the {}',
     'a digital illustration of one {}',
     'a close-up digital illustration of the {}',
-    'a rendition of the {}',
-    'a digital illustration of the clean {}',
+    'a rendition of the {} pokemon',
+    'a digital illustration of the clean {} pokemon',
     'a rendition of a {}',
-    'a digital illustration of a nice {}',
+    'a digital illustration of a nice {} pokemon',
     'a good digital illustration of a {}',
     'a digital illustration of the nice {}',
     'a digital illustration of the small {}',
     'a digital illustration of the weird {}',
-    'a digital illustration of the large {}',
+    'a digital illustration of the large {} pokemon',
     'a digital illustration of a cool {}',
     'a digital illustration of a small {}',
 ]
@@ -71,11 +71,44 @@ imagenet_dual_templates_small = [
     'a digital illustration of a small {} with {}',
 ]
 
+transformation_templates_small = [
+    'digital sketch person {} into a {}',
+    'rendering kid {} into a {} pixiv',
+    'cropped art lady {} into {}',
+    'cropped digital art girl {} into {}',
+    'digital art of {} into a {} furry',
+    'digital painting {} into a {} furry',
+    'illustration of a dirty {} into {}',
+    'digital art of girl {} into {}',
+    'middle {} into {}',
+    'mid {} into {}',
+    '{} of a character into {}',
+    'closeup digital art of {} into {}',
+    'good digital sketch of {} into {}',
+    'cropped digital art {} into {}',
+    'digital drawing of {} into {}',
+    'great art of a {} into {}',
+    'one {} into {}',
+    'sketchy {} art of person into {}',
+    'hg 8k person {} into {}',
+    'pixiv high-quality {} art into {}',
+    'furry 4K {} art into pretty {}',
+    'furry rendition of a {} into {}',
+    'hd furry art of {} into a nice {}',
+    'digital painting of {} {}',
+    'painting of character {} into {}',
+    'stoic character {} into {}',
+    'happy character {} into {}',
+]
+
 per_img_token_list = [
     'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת',
 ]
 
+precomputed_prompts = list()
+
 class PersonalizedBase(Dataset):
+    # TODO: Should we pass in the seed for slightly-more-reproducible training runs?
     def __init__(self,
                  data_root,
                  size=None,
@@ -89,28 +122,26 @@ class PersonalizedBase(Dataset):
                  mixing_prob=0.25,
                  coarse_class_text=None,
                  ):
+        global precomputed_prompts
+        if per_image_tokens:
+            raise Exception('per image tokens should not be used. this feature is probably completely broken now')
 
         self.data_root = data_root
 
-        self.image_paths = [os.path.join(self.data_root, file_path) for file_path in os.listdir(self.data_root)]
+        self.image_paths = list()
 
-        # self._length = len(self.image_paths)
-        self.num_images = len(self.image_paths)
-        self._length = self.num_images 
-
-        self.placeholder_token = placeholder_token
-
-        self.per_image_tokens = per_image_tokens
+        # One collection of precomputed prompts per Image.
+        self.precomputed_prompts = list()
         self.center_crop = center_crop
         self.mixing_prob = mixing_prob
 
+
+        placeholder_string = placeholder_token
+
         self.coarse_class_text = coarse_class_text
-
-        if per_image_tokens:
-            assert self.num_images < len(per_img_token_list), f"Can't use per-image tokens when the training set contains more than {len(per_img_token_list)} tokens. To enable larger sets, add more tokens to 'per_img_token_list'."
-
-        if set == "train":
-            self._length = self.num_images * repeats
+        if self.coarse_class_text:
+            # placeholder_string = f"{self.coarse_class_text} {placeholder_token}"
+            raise Exception('coarse class text isnt supported ATM')
 
         self.size = size
         self.interpolation = {"linear": PIL.Image.LINEAR,
@@ -118,28 +149,52 @@ class PersonalizedBase(Dataset):
                               "bicubic": PIL.Image.BICUBIC,
                               "lanczos": PIL.Image.LANCZOS,
                               }[interpolation]
+
+        images_in = os.listdir(self.data_root)
+
+        compute_prompts = len(precomputed_prompts) == 0
+        for file_path in images_in:
+            self.image_paths.append(os.path.join(self.data_root, file_path))
+            descriptive, _ = os.path.splitext(file_path)
+            splitted = descriptive.split('-')
+            assert len(splitted) > 1, 'image names must be of form: ####-description-here'
+            # This breaks non-descriptor image setups
+            assert len(splitted[0]) == 4, f'image name: {descriptive} must be of the form ####-description-here'
+
+            descriptive = ' '.join(splitted[1:])
+
+            if compute_prompts:
+                precomputed_prompts.append([x.format(placeholder_string,descriptive) for x in transformation_templates_small])
+
+        self._length = self.num_images = len(self.image_paths)
+
+        if len(precomputed_prompts) != self._length:
+            raise Exception(f'Expected # of image prompts: {self._length} does not match actual: {len(precomputed_prompts)}')
+
+        if set == "train":
+            self._length = self.num_images * repeats
+
         self.flip = transforms.RandomHorizontalFlip(p=flip_p)
+
+
 
     def __len__(self):
         return self._length
 
     def __getitem__(self, i):
-        example = {}
-        image = Image.open(self.image_paths[i % self.num_images])
+        global precomputed_prompts
+        selected_idx = i % self.num_images
+
+        current_img = self.image_paths[selected_idx]
+
+        # TODO: what if we preloaded the images into memory?
+        image = Image.open(current_img)
 
         if not image.mode == "RGB":
             image = image.convert("RGB")
 
-        placeholder_string = self.placeholder_token
-        if self.coarse_class_text:
-            placeholder_string = f"{self.coarse_class_text} {placeholder_string}"
-
-        if self.per_image_tokens and np.random.uniform() < self.mixing_prob:
-            text = random.choice(imagenet_dual_templates_small).format(placeholder_string, per_img_token_list[i % self.num_images])
-        else:
-            text = random.choice(imagenet_templates_small).format(placeholder_string)
-            
-        example["caption"] = text
+        prompt_list = precomputed_prompts[selected_idx]
+        text = random.choice(prompt_list)
 
         # default to score-sde preprocessing
         img = np.array(image).astype(np.uint8)
@@ -156,5 +211,9 @@ class PersonalizedBase(Dataset):
 
         image = self.flip(image)
         image = np.array(image).astype(np.uint8)
-        example["image"] = (image / 127.5 - 1.0).astype(np.float32)
+
+        example = {
+            "caption": text,
+            "image": (image / 127.5 - 1.0).astype(np.float32),
+        }
         return example

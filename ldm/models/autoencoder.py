@@ -87,7 +87,7 @@ class VQModel(pl.LightningModule):
         print(f"Restored from {path} with {len(missing)} missing and {len(unexpected)} unexpected keys")
         if len(missing) > 0:
             print(f"Missing Keys: {missing}")
-            print(f"Unexpected Keys: {unexpected}")
+            print(f"[Autoencoder] Unexpected Keys: {unexpected}")
 
     def on_train_batch_end(self, *args, **kwargs):
         if self.use_ema:
