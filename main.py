@@ -525,18 +525,18 @@ def main():
 
         # model
 
-        # config.model.params.personalization_config.params.init_word = opt.init_word
         config.model.params.personalization_config.params.embedding_manager_ckpt = opt.embedding_manager_ckpt
         config.model.params.personalization_config.params.placeholder_tokens = opt.placeholder_tokens
 
         if opt.init_word:
-            config.model.params.personalization_config.params.initializer_words[0] = opt.init_word
+            config.model.params.personalization_config.params.initializer_words = [opt.init_word]
 
         if opt.actual_resume:
             model = load_model_from_config(config, opt.actual_resume)
         else:
             model = instantiate_from_config(config.model)
 
+        print(f'detected init_words: {config.model.params.personalization_config.params.initializer_words}')
         # trainer and callbacks
 
         # default logger configs
@@ -633,7 +633,8 @@ def main():
                           logger=trainer_logger,
                           gpus=[0],
                           max_steps=trainer_opt.max_steps,
-                          val_check_interval=600,
+                          check_val_every_n_epoch=2,
+                          val_check_interval=500,
                           log_every_n_steps=500,
                           strategy=DDPStrategy(find_unused_parameters=False))
 

@@ -73,34 +73,45 @@ imagenet_dual_templates_small = [
 
 transformation_templates_small = [
     'digital sketch person {} into a {}',
-    'rendering kid {} into a {} pixiv',
-    'cropped art lady {} into {}',
-    'cropped digital art girl {} into {}',
+    'rendering of a {} into a {} pixiv',
+    'cropped {} art into {}',
+    'cropped {} digital art into {}',
     'digital art of {} into a {} furry',
     'digital painting {} into a {} furry',
     'illustration of a dirty {} into {}',
-    'digital art of girl {} into {}',
-    'middle {} into {}',
-    'mid {} into {}',
+    'digital art of a {} into {}',
+    'middle {} becoming a {}',
+    'mid {} turning into {}',
     '{} of a character into {}',
     'closeup digital art of {} into {}',
     'good digital sketch of {} into {}',
     'cropped digital art {} into {}',
-    'digital drawing of {} into {}',
-    'great art of a {} into {}',
-    'one {} into {}',
-    'sketchy {} art of person into {}',
-    'hg 8k person {} into {}',
-    'pixiv high-quality {} art into {}',
+    'digital drawing of midway {} into {}',
+    'great art of a partial {} into {}',
+    'sketch of a {} into {}',
+    'sketchy mid {} art into {}',
+    'hg 8k {} image of a character into {}',
+    'pixiv high-quality {} into {}',
     'furry 4K {} art into pretty {}',
-    'furry rendition of a {} into {}',
+    'furry rendition {} into {}',
     'hd furry art of {} into a nice {}',
-    'digital painting of {} {}',
-    'painting of character {} into {}',
+    'digital painting of {} into {}',
+    'painting surprised character {} into {}',
     'stoic character {} into {}',
     'happy character {} into {}',
 ]
 
+ran_once = False
+def validate_personalized_strs():
+    global ran_once
+
+    if ran_once:
+        return
+    for x in transformation_templates_small:
+        assert x.count("{}") == 2, "transformation_templates_small. string: [" + x + "] requires exactly two {}"
+    ran_once=True
+
+validate_personalized_strs()
 per_img_token_list = [
     'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 'י', 'כ', 'ל', 'מ', 'נ', 'ס', 'ע', 'פ', 'צ', 'ק', 'ר', 'ש', 'ת',
 ]
@@ -134,7 +145,6 @@ class PersonalizedBase(Dataset):
         self.precomputed_prompts = list()
         self.center_crop = center_crop
         self.mixing_prob = mixing_prob
-
 
         placeholder_string = placeholder_token
 

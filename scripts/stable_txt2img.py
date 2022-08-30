@@ -16,7 +16,8 @@ from ldm.util import instantiate_from_config
 from ldm.models.diffusion.ddim import DDIMSampler
 from ldm.models.diffusion.plms import PLMSSampler
 # from ldm.models.diffusion.ksampler import KSampler
-
+from transformers import logging
+logging.set_verbosity_warning()
 
 def chunk(it, size):
     it = iter(it)
@@ -176,9 +177,8 @@ def main():
         default="autocast"
     )
 
-
     parser.add_argument(
-        "--embedding_path",
+        "--embedding_file",
         type=str,
         help="Path to a pre-trained embedding manager checkpoint")
 
@@ -189,12 +189,19 @@ def main():
         opt.config = "configs/latent-diffusion/txt2img-1p4B-eval.yaml"
         opt.ckpt = "models/ldm/text2img-large/model.ckpt"
         opt.outdir = "outputs/txt2img-samples-laion400m"
+        raise Exception('Laion400m unsupported ATM')
+
+    # if opt.klms and opt.plms:
+    if opt.plms:
+        raise Exception('--klms and --plms are specified. They are exclusive flags. Set one or the other.')
 
     seed_everything(opt.seed)
 
     config = OmegaConf.load(f"{opt.config}")
     model = load_model_from_config(config, f"{opt.ckpt}")
-    model.embedding_manager.load(opt.embedding_path)
+
+    print(f'Loading embedding from: {opt.embedding_file}')
+    model.embedding_manager.load(opt.embedding_file)
 
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     model = model.to(device)

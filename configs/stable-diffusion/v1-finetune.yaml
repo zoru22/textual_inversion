@@ -1,5 +1,5 @@
 model:
-  base_learning_rate: 5.5e-03
+  base_learning_rate: 6.5e-03
   target: ldm.models.diffusion.ddpm.LatentDiffusion
   params:
     linear_start: 0.00085
@@ -22,9 +22,9 @@ model:
       target: ldm.modules.embedding_manager.EmbeddingManager
       params:
         placeholder_strings: ["*"]
-        initializer_words: ["sculpture"]
+        initializer_words: ["tf", "transforming", "hoop", "hoop tf", "transformation"]
         per_image_tokens: false
-        num_vectors_per_token: 4
+        num_vectors_per_token: 6
         progressive_words: False
 
     unet_config:
@@ -97,9 +97,9 @@ lightning:
       target: main.ImageLogger
       params:
         batch_frequency: 500
-        max_images: 4
+        max_images: 8
         increase_log_steps: False
 
   trainer:
-    benchmark: True
-    max_steps: 12200
+    benchmark: False
+    max_steps: 15300
