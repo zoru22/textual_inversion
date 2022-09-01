@@ -631,11 +631,12 @@ def main():
         trainer_logger = instantiate_from_config(logger_cfg)
         trainer = Trainer(callbacks=trainer_callbacks,
                           logger=trainer_logger,
+                          auto_scale_batch_size=True,
                           gpus=[0],
                           max_steps=trainer_opt.max_steps,
+                          benchmark=False,
                           check_val_every_n_epoch=2,
-                          val_check_interval=500,
-                          log_every_n_steps=500,
+                          log_every_n_steps=250,
                           strategy=DDPStrategy(find_unused_parameters=False))
 
         # data
@@ -648,10 +649,19 @@ def main():
         # lightning still takes care of proper multiprocessing though
         data.prepare_data()
         data.setup()
+
+        num_batches = 0
         print("#### Data #####")
         for k in data.datasets:
-            print(f"{k}, {data.datasets[k].__class__.__name__}, {len(data.datasets[k])}")
+            datasetName = data.datasets[k].__class__.__name__
+            print(f"\t{k}, {datasetName}, {len(data.datasets[k])}")
+            if k == 'train' and datasetName == 'PersonalizedBase':
+                num_batches = len(data.datasets[k])
 
+
+        trainer.num_training_batches = num_batches if num_batches > 0 else 500
+
+        print(f'Data loaded: [{trainer.num_training_batches}]')
         # configure learning rate
         bs, base_lr = config.data.params.batch_size, config.model.base_learning_rate
         if not cpu:

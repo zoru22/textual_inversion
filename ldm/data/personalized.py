@@ -71,35 +71,56 @@ imagenet_dual_templates_small = [
     'a digital illustration of a small {} with {}',
 ]
 
-transformation_templates_small = [
-    'digital sketch person {} into a {}',
-    'rendering of a {} into a {} pixiv',
-    'cropped {} art into {}',
-    'cropped {} digital art into {}',
-    'digital art of {} into a {} furry',
-    'digital painting {} into a {} furry',
-    'illustration of a dirty {} into {}',
-    'digital art of a {} into {}',
-    'middle {} becoming a {}',
-    'mid {} turning into {}',
-    '{} of a character into {}',
-    'closeup digital art of {} into {}',
-    'good digital sketch of {} into {}',
-    'cropped digital art {} into {}',
-    'digital drawing of midway {} into {}',
-    'great art of a partial {} into {}',
-    'sketch of a {} into {}',
-    'sketchy mid {} art into {}',
-    'hg 8k {} image of a character into {}',
-    'pixiv high-quality {} into {}',
-    'furry 4K {} art into pretty {}',
-    'furry rendition {} into {}',
-    'hd furry art of {} into a nice {}',
-    'digital painting of {} into {}',
-    'painting surprised character {} into {}',
-    'stoic character {} into {}',
-    'happy character {} into {}',
+multi_templates_small = [
+    'digital sketch person {} of {}',
+    'rendering of {} of a {}',
+    'cropped {} art of a {}',
+    'cropped {} digital art {}',
+    'digital {} art of {}',
+    'digital {} painting of {}',
+    '{} illustration of a dirty {}',
+    'digital {} art of {}',
+    'middle {} of {}',
+    'mid {} transformation of {}',
+    '{} of a {}',
+    'closeup digital {} art of {}',
+    'good digital {} sketch of {}',
+    'cropped {} digital art {}',
+    'digital drawing of mid {} of {}',
+    'great art of {} partial, {}',
+    '{} sketch of {}',
+    'sketchy {} art, {}',
+    'hd 8k {} image of a character, {}',
+    '{} pixiv high-quality, {}',
+    '4k {} art {} pretty',
+    '{} rendition of {}',
+    'hd {} art of a nice {}',
+    'high-quality digital {} painting, {}',
+    '{} painting of a surprised {}',
+    '{} stoic {} with plain background',
+    'happy {} of a transforming {}',
 ]
+
+imagenet_multi_templates_small = [
+    'a painting in the style of {} with {}',
+    'a rendering in the style of {} with {}',
+    'a cropped painting in the style of {} with {}',
+    'the painting in the style of {} with {}',
+    'a clean painting in the style of {} with {}',
+    'a dirty painting in the style of {} with {}',
+    'a dark painting in the style of {} with {}',
+    'a cool painting in the style of {} with {}',
+    'a close-up painting in the style of {} with {}',
+    'a bright painting in the style of {} with {}',
+    'a cropped painting in the style of {} with {}',
+    'a good painting in the style of {} with {}',
+    'a painting of one {} in the style of {}',
+    'a nice painting in the style of {} with {}',
+    'a small painting in the style of {} with {}',
+    'a weird painting in the style of {} with {}',
+    'a large painting in the style of {} with {}',
+]
+
 
 ran_once = False
 def validate_personalized_strs():
@@ -107,8 +128,8 @@ def validate_personalized_strs():
 
     if ran_once:
         return
-    for x in transformation_templates_small:
-        assert x.count("{}") == 2, "transformation_templates_small. string: [" + x + "] requires exactly two {}"
+    for x in multi_templates_small:
+        assert x.count("{}") == 2, "multi_templates_small. string: [" + x + "] requires exactly two {}"
     ran_once=True
 
 validate_personalized_strs()
@@ -174,7 +195,7 @@ class PersonalizedBase(Dataset):
             descriptive = ' '.join(splitted[1:])
 
             if compute_prompts:
-                precomputed_prompts.append([x.format(placeholder_string,descriptive) for x in transformation_templates_small])
+                precomputed_prompts.append([x.format(placeholder_string,descriptive) for x in imagenet_multi_templates_small])
 
         self._length = self.num_images = len(self.image_paths)
 

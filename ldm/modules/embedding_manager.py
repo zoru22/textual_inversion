@@ -44,6 +44,9 @@ class EmbeddingManager(nn.Module):
     ):
         super().__init__()
 
+        if num_vectors_per_token == 1:
+            raise Exception('num vectors per token should be > 1')
+
         self.string_to_token_dict = {}
         
         self.string_to_param_dict = nn.ParameterDict()

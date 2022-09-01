@@ -1,11 +1,11 @@
 model:
-  base_learning_rate: 6.5e-03
+  base_learning_rate: 5.25e-03
   target: ldm.models.diffusion.ddpm.LatentDiffusion
   params:
     linear_start: 0.00085
     linear_end: 0.0120
     num_timesteps_cond: 1
-    log_every_t: 300
+    log_every_t: 500
     timesteps: 1000
     first_stage_key: image
     cond_stage_key: caption
@@ -22,9 +22,9 @@ model:
       target: ldm.modules.embedding_manager.EmbeddingManager
       params:
         placeholder_strings: ["*"]
-        initializer_words: ["tf", "transforming", "hoop", "hoop tf", "transformation"]
+        initializer_words: ["lizard", "anthro", "lizard girls"]
         per_image_tokens: false
-        num_vectors_per_token: 6
+        num_vectors_per_token: 4
         progressive_words: False
 
     unet_config:
@@ -102,4 +102,4 @@ lightning:
 
   trainer:
     benchmark: False
-    max_steps: 15300
+    max_steps: 15000

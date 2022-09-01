@@ -44,7 +44,7 @@ def load_model_from_config(config, ckpt, verbose=False):
     return model
 
 
-def main():
+def get_opts():
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -62,6 +62,20 @@ def main():
         default="outputs/txt2img-samples"
     )
     parser.add_argument(
+        "--grid_dir",
+        type=str,
+        nargs="?",
+        help="dir to write results to",
+        default="outputs/grid"
+    )
+    parser.add_argument(
+        "--grid_prefix",
+        type=str,
+        nargs="?",
+        help="filename prefix for grid outputs",
+        default=""
+    )
+    parser.add_argument(
         "--skip_grid",
         action='store_true',
         help="do not save a grid, only individual samples. Helpful when evaluating lots of samples",
@@ -74,7 +88,7 @@ def main():
     parser.add_argument(
         "--ddim_steps",
         type=int,
-        default=50,
+        default=75,
         help="number of ddim sampling steps",
     )
     parser.add_argument(
@@ -147,7 +161,7 @@ def main():
         help="unconditional guidance scale: eps = eps(x, empty) + scale * (eps(x, cond) - eps(x, empty))",
     )
     parser.add_argument(
-        "--from-file",
+        "--from_file",
         type=str,
         help="if specified, load prompts from this file",
     )
@@ -180,10 +194,15 @@ def main():
     parser.add_argument(
         "--embedding_file",
         type=str,
-        help="Path to a pre-trained embedding manager checkpoint")
+        help="Path to a pre-trained embedding manager checkpoint",
+        required=True,
+    )
 
     opt = parser.parse_args()
+    validate_opt(opt)
+    return opt
 
+def validate_opt(opt):
     if opt.laion400m:
         print("Falling back to LAION 400M model...")
         opt.config = "configs/latent-diffusion/txt2img-1p4B-eval.yaml"
@@ -194,6 +213,22 @@ def main():
     # if opt.klms and opt.plms:
     if opt.plms:
         raise Exception('--klms and --plms are specified. They are exclusive flags. Set one or the other.')
+
+    print(f'Checking paths. CWD: {os.getcwd()}')
+
+    assert os.path.isfile(opt.embedding_file), "--embedding_file must be provided and exist as a file"
+    assert os.path.isfile(opt.config), "--config must be provided and  exist as a file"
+    assert os.path.isfile(opt.ckpt), "--ckpt must be provided and exist as a file"
+    if opt.from_file is None or len(opt.from_file) == 0:
+        assert opt.prompt and len(opt.prompt) > 0, "--prompt must be provided."
+    else:
+        assert os.path.isfile(opt.from_file), "--from_file must be a locatable file. "
+
+    os.makedirs(opt.outdir, exist_ok=True)
+    os.makedirs(opt.grid_dir, exist_ok=True)
+
+def main():
+    opt = get_opts()
 
     seed_everything(opt.seed)
 
@@ -211,16 +246,15 @@ def main():
     else:
         sampler = DDIMSampler(model)
 
-    os.makedirs(opt.outdir, exist_ok=True)
-    outpath = opt.outdir
+    grid_out, outpath = opt.outdir
+    if opt.grid_dir:
+        grid_out = opt.grid_dir
 
     batch_size = opt.n_samples
     n_rows = opt.n_rows if opt.n_rows > 0 else batch_size
     if not opt.from_file:
         prompt = opt.prompt
-        assert prompt is not None
         data = [batch_size * [prompt]]
-
     else:
         print(f"reading prompts from {opt.from_file}")
         with open(opt.from_file, "r") as f:
@@ -230,7 +264,7 @@ def main():
     sample_path = os.path.join(outpath, "samples")
     os.makedirs(sample_path, exist_ok=True)
     base_count = len(os.listdir(sample_path))
-    grid_count = len(os.listdir(outpath)) - 1
+    grid_count = len(os.listdir(grid_out)) - 1
 
     start_code = None
     if opt.fixed_code:
@@ -282,7 +316,12 @@ def main():
 
                     # to image
                     grid = 255. * rearrange(grid, 'c h w -> h w c').cpu().numpy()
-                    Image.fromarray(grid.astype(np.uint8)).save(os.path.join(outpath, f'{prompt.replace(" ", "-")}-{grid_count:04}.jpg'))
+
+                    prefix = ''
+                    if opt.grid_prefix:
+                        prefix = f'{opt.grid_prefix}-'
+                    grid_file = os.path.join(grid_out, f'{prefix}{prompt.replace(" ", "-")}-{grid_count:04}.jpg')
+                    Image.fromarray(grid.astype(np.uint8)).save(grid_file)
                     grid_count += 1
 
                 toc = time.time()

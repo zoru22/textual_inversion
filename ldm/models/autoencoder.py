@@ -30,6 +30,10 @@ class VQModel(pl.LightningModule):
                  use_ema=False
                  ):
         super().__init__()
+        # Sanity checking to make sure the config is correctly loading
+        if ddconfig["z_channels"] != 4:
+            raise Exception(f'z_channels is: {ddconfig["z_channels"]} but should be 4')
+
         self.embed_dim = embed_dim
         self.n_embed = n_embed
         self.image_key = image_key

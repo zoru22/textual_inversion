@@ -25,7 +25,7 @@ function runInference()
   --embedding_file "$full_embedding_path" \
   --ckpt "$model_ckpt" \
   --prompt "$prompt" \
-  --seed 246 \
+  --seed 512 \
   --outdir "outputs/tf/$embedding_base"
 
   echo "ran inference!"
@@ -35,8 +35,8 @@ function runInference()
 
 # I use stable diffusion's v1.3 ckpt
 modelCkpt="models/ldm/stable-diffusion/model.ckpt"
-prompt="8k * canon transformation high quality realistic kodak picture of * into pool toy shark synthetic"
-embedding_ckpt_folder="logs/hoop/2022-08-30T11-37-04_hoop_tf_one/checkpoints"
+prompt="a lizard woman in a bikini in the style of *"
+embedding_ckpt_folder="logs/vader-san/2022-08-31T18-32-37_vader_san_style_attempt_one/checkpoints"
 
 for f in "./$embedding_ckpt_folder/"*.pt; do
   g=$(basename "${f%.pt}");
@@ -45,7 +45,7 @@ for f in "./$embedding_ckpt_folder/"*.pt; do
     continue
   fi
 #  apparently 200 steps is ideal?
-  runInference 3 2 10 100 "$f" "$modelCkpt" "$prompt"
+  runInference 3 2 8 100 "$f" "$modelCkpt" "$prompt"
   if [ $? != 0 ]; then
     echo "failed, path: $f"
     exit $?
